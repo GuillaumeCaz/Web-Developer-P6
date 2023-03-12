@@ -5,6 +5,11 @@ const port = 4200;
 const User = require('./models/userModels');
 const userRoutes = require('./routes/userRoutes');
 const userControllers = require('./controllers/userController')
+const cors = require('cors'); 
+const bodyParser = require('body-parser');
+require('dotenv').config();
+
+app.use(cors()); 
 
 app.get('/', (req, res) => {
   res.send('Hello World!');
@@ -12,28 +17,15 @@ app.get('/', (req, res) => {
 
 connectDB()
   .then(() => {
-    app.listen(port, () => {
-      console.log(`Serveur démarré sur le port ${port}`);
-    });
   })
   .catch((err) => {
     console.error(err);
   });
 
+
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use('/api/auth', userRoutes);
+
+
 module.exports = app; 
-
-exports.createUser = (req, res, next) => {
-  bcrypt.hash(req.body.password, 10)
-    .then(hash => {
-      const user = new User({
-        email: req.body.email,
-        password: hash
-      });
-      user.save()
-        .then(() => res.status(201).json({ message: 'Utilisateur créé !' }))
-        .catch(error => res.status(400).json({ error }));
-    })
-    .catch(error => res.status(500).json({ error }));
-};
-
-app.use('/users', userRoutes);

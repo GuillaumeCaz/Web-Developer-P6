@@ -1,36 +1,15 @@
 const User = require("../models/userModels");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const crypto = require('crypto');
 
-const createUser = (req, res) => {
-  const { username, email, password } = req.body;
-  bcrypt.hash(password, 10, (err, hash) => {
-    if (err) {
-      return res.status(500).json({
-        error: err,
-      });
-    } else {
-      const user = new User({
-        username: username,
-        email: email,
-        password: hash,
-      });
-      user
-        .save()
-        .then((result) => {
-          res.status(201).json({
-            message: "User created successfully",
-            result: result,
-          });
-        })
-        .catch((err) => {
-          res.status(500).json({
-            error: err,
-          });
-        });
-    }
-  });
-};
+// Générer une clé secrète aléatoire de 64 octets
+const JWT_KEY = crypto.randomBytes(64).toString('hex');
+
+if (!JWT_KEY) {
+  console.error('JWT_KEY is not set!');
+  process.exit(1);
+}
 
 const loginUser = (req, res) => {
   const { email, password } = req.body;
@@ -54,7 +33,7 @@ const loginUser = (req, res) => {
               email: user.email,
               userId: user._id,
             },
-            process.env.JWT_KEY,
+            JWT_KEY,
             {
               expiresIn: "1h",
             }
@@ -76,7 +55,33 @@ const loginUser = (req, res) => {
     });
 };
 
+function signupUser(req, res, next) {
+  console.log(req.body);
+  bcrypt.hash(req.body.password, 10).then((hash) => {
+    const user = new User({
+      email: req.body.email,
+      password: hash,
+    });
+    user
+      .save()
+      .then(() => {
+        const token = jwt.sign({ userId: user._id }, JWT_KEY, {
+          expiresIn: "24h",
+        });
+        res.status(201).json({
+          userId: user._id,
+          token: token,
+        });
+      })
+      .catch((error) => {
+        res.status(500).json({
+          error: error,
+        });
+      });
+  });
+}
+
 module.exports = {
-  createUser: createUser,
   loginUser: loginUser,
+  signupUser: signupUser,
 };
