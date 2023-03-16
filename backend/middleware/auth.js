@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const JWT_SECRET = 'commecakonfaitunecle'; 
+const JWT_SECRET = "SECRET_220520";
 
 module.exports = (req, res, next) => {
   try {
@@ -9,9 +9,10 @@ module.exports = (req, res, next) => {
     if (req.body.userId && req.body.userId !== userId) {
       throw 'User ID non valable';
     } else {
+      req.userId = userId ;
       next();
     }
-  } catch {
+  } catch { 
     res.status(401).json({
       error: new Error('Requête non authentifiée')
     });

@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken");
 const crypto = require('crypto');
 
 // Générer une clé secrète aléatoire de 64 octets
-const JWT_KEY = crypto.randomBytes(64).toString('hex');
+const JWT_KEY = "SECRET_220520";
 
 if (!JWT_KEY) {
   console.error('JWT_KEY is not set!');
