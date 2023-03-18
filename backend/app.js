@@ -13,9 +13,6 @@ const path = require('path');
 require('dotenv').config();
 
 
-
-
-
 app.use(cors()); 
 app.use('/images', express.static(path.join(__dirname, 'images')));
 
