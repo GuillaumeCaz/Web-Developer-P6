@@ -1,4 +1,5 @@
 const Sauce = require('../models/sauceModels');
+const fs = require('fs')
 
 // Toutes les sauces
 exports.getAllSauces = (req, res, next) => {
@@ -42,41 +43,56 @@ exports.createSauce = (req, res, next) => {
       res.status(400).json({ error });
     });
 };
-
-// Modifier sauce
+ //Modifier sauce
 exports.modifySauce = (req, res, next) => {
-  const sauce = req.file ?
-    {
-      ...JSON.parse(req.body.sauce),
-      imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
-    } : { ...req.body };
-  Sauce.updateOne({ _id: req.params.id }, { ...sauce, _id: req.params.id })
-    .then(() => {
-      res.status(200).json({ message: 'Sauce modifiée !' });
-    })
-    .catch(error => {
-      res.status(400).json({ error });
-    });
-};
-
-// Supprimer sauce
-exports.deleteSauce = (req, res, next) => {
   Sauce.findOne({ _id: req.params.id })
     .then(sauce => {
-      const filename = sauce.imageUrl.split('/images/')[1];
-      fs.unlink(`images/${filename}`, () => {
-        Sauce.deleteOne({ _id: req.params.id })
-          .then(() => {
-            res.status(200).json({ message: 'Sauce supprimée !' });
-          })
-          .catch(error => {
-            res.status(400).json({ error });
-          });
-      });
+      if (!sauce) {
+        return res.status(404).json({ error: 'Sauce not found' });
+      }
+
+      // Vérifier que l'utilisateur actuel est le créateur de la sauce
+      if (sauce.userId !== req.userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const updatedSauce = req.file ?
+        {
+          ...JSON.parse(req.body.sauce),
+          imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
+        } : { ...req.body };
+      Sauce.updateOne({ _id: req.params.id }, { ...updatedSauce, _id: req.params.id })
+        .then(() => {
+          res.status(200).json({ message: 'Sauce modifiée !' });
+        })
+        .catch(error => {
+          res.status(400).json({ error });
+        });
     })
     .catch(error => {
       res.status(500).json({ error });
     });
+};
+
+
+// Supprimer sauce
+exports.deleteSauce = (req, res, next) => {
+  Sauce.findOne({ _id: req.params.id })
+  .then((sauce) => {
+      if(!sauce) {
+          return res.status(404).json({ error: new Error('Sauce non trouvée') });
+      }
+      if(sauce.userId !== req.userId){
+          return res.status(401).json({ error: new Error('Requête 1 non autorisée') });
+      }
+      const filename = sauce.imageUrl.split('/images/')[1];
+      fs.unlink(`images/${filename}`, () => {
+          Sauce.deleteOne({ _id: req.params.id })
+          .then(() => res.status(200).json({message: 'Sauce supprimée'}))
+          .catch(error => res.status(404).json({error}));
+      });
+  })
+  .catch(error => {console.log('error,',error) ; res.status(500).json({error}) });
 };
 
 // Liker/Dislike sauce

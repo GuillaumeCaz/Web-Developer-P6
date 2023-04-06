@@ -6,10 +6,6 @@ const crypto = require('crypto');
 // Générer une clé secrète aléatoire de 64 octets
 const JWT_KEY = "SECRET_220520";
 
-if (!JWT_KEY) {
-  console.error('JWT_KEY is not set!');
-  process.exit(1);
-}
 
 const loginUser = (req, res) => {
   const { email, password } = req.body;
@@ -41,6 +37,7 @@ const loginUser = (req, res) => {
           return res.status(200).json({
             message: "Auth successful",
             token: token,
+            userId: user._id,
           });
         }
         res.status(401).json({
