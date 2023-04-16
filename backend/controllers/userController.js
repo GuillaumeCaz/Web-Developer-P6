@@ -1,7 +1,7 @@
 const User = require("../models/userModels");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const crypto = require('crypto');
+
 
 // Générer une clé secrète aléatoire de 64 octets
 const JWT_KEY = "SECRET_220520";
