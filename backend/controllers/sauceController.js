@@ -1,7 +1,7 @@
 const Sauce = require('../models/sauceModels');
-const fs = require('fs')
+const fs = require('fs');
 
-// Toutes les sauces
+// Récupérer toutes les sauces
 exports.getAllSauces = (req, res, next) => {
   Sauce.find()
     .then(sauces => {
@@ -12,7 +12,7 @@ exports.getAllSauces = (req, res, next) => {
     });
 };
 
-// Trouver une sauce
+// Récupérer une sauce par ID
 exports.getOneSauce = (req, res, next) => {
   Sauce.findOne({ _id: req.params.id })
     .then(sauce => {
@@ -23,7 +23,7 @@ exports.getOneSauce = (req, res, next) => {
     });
 };
 
-// Créer sauce
+// Créer une nouvelle sauce
 exports.createSauce = (req, res, next) => {
   const sauce = JSON.parse(req.body.sauce);
   const newSauce = new Sauce({
@@ -43,19 +43,28 @@ exports.createSauce = (req, res, next) => {
       res.status(400).json({ error });
     });
 };
- //Modifier sauce
+
+// Modifier une sauce existante
 exports.modifySauce = (req, res, next) => {
   Sauce.findOne({ _id: req.params.id })
     .then(sauce => {
       if (!sauce) {
-        return res.status(404).json({ error: 'Sauce not found' });
+        return res.status(404).json({ error: 'Sauce non trouvée' });
       }
 
       // Vérifier que l'utilisateur actuel est le créateur de la sauce
       if (sauce.userId !== req.userId) {
-        return res.status(401).json({ error: 'Unauthorized' });
+        return res.status(401).json({ error: 'Non autorisé' });
       }
-
+      // Supprimer l'ancienne image
+      if (sauce.imageUrl) {
+        const oldImagePath = sauce.imageUrl.split('/images/')[1];
+        fs.unlink(`images/${oldImagePath}`, error => {
+          if (error) {
+            console.log(error);
+          }
+        });
+      }
       const updatedSauce = req.file ?
         {
           ...JSON.parse(req.body.sauce),
@@ -73,7 +82,6 @@ exports.modifySauce = (req, res, next) => {
       res.status(500).json({ error });
     });
 };
-
 
 // Supprimer sauce
 exports.deleteSauce = (req, res, next) => {
@@ -108,7 +116,7 @@ exports.likeSauce = (req, res, next) => {
       const userIndexInDislikedArray = sauce.usersDisliked.indexOf(userId);
 
       if (req.body.like === 1) {
-        // User likes the sauce
+        // Like
         if (userIndexInLikedArray === -1) {
           sauce.usersLiked.push(userId);
           sauce.likes++;
@@ -116,7 +124,7 @@ exports.likeSauce = (req, res, next) => {
           return res.status(400).json({ error: 'Sauce already liked' });
         }
       } else if (req.body.like === -1) {
-        // User dislikes the sauce
+        // Dislike
         if (userIndexInDislikedArray === -1) {
           sauce.usersDisliked.push(userId);
           sauce.dislikes++;
@@ -124,7 +132,7 @@ exports.likeSauce = (req, res, next) => {
           return res.status(400).json({ error: 'Sauce already disliked' });
         }
       } else if (req.body.like === 0) {
-        // User cancels his like/dislike
+        // Annuler le Like/Dislike
         if (userIndexInLikedArray !== -1) {
           sauce.usersLiked.splice(userIndexInLikedArray, 1);
           sauce.likes--;
