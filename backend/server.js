@@ -22,7 +22,6 @@ app.set('port', port);
 // Gestionnaire d'erreurs pour le serveur
 const errorHandler = error => {
   if (error.syscall !== 'listen') {
-    // Erreur système autre que l'écoute du serveur
     throw error;
   }
   const address = server.address();
